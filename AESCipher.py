@@ -11,7 +11,7 @@ class AESCipher(object):
         self.cipher_file_path = cipher_file_path
 
     def encrypt(self, raw):
-        raw = self._pad(raw)
+        # raw = self.raw
         # Use the run function from aes.py for encryption
         encrypted_data = run(Direction.ENCRYPT, raw, self.key, self.cipher_file_path)
         return encrypted_data
@@ -30,13 +30,3 @@ class AESCipher(object):
         pad_len = s[-1]
         return s[:-pad_len]
 
-# # Example usage:
-# key = "your_secret_key"  # Replace with your secret key
-# aes_cipher = AESCipher(key)
-
-# text_to_encrypt = "Hello, this is a test!"
-# encrypted_text = aes_cipher.encrypt(text_to_encrypt)
-# print(f"Encrypted: {encrypted_text}")
-
-# decrypted_text = aes_cipher.decrypt(encrypted_text)
-# print(f"Decrypted: {decrypted_text}")

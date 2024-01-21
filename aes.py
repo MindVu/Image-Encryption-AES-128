@@ -1,13 +1,7 @@
-"""Tham module provides encrypting/decrypting according AES(128) standart.
-Based on Rijndael algorithm, AES uses 4 transformation for encrypting: SubSytes(), ShiftRows(),
-MixColumns() and AddRoundKey(). For decrypting it uses inverse functions of that four.
-"""
-
 nb = 4  # number of coloumn of State
 nr = 10 # number of rounds ib ciper cycle
 nk = 4  # key length
 
-# This dict will be used in SubBytes().
 hex_symbols_to_int = {'a': 10, 'b': 11, 'c': 12, 'd': 13, 'e': 14, 'f': 15}
 
 sbox = [
@@ -56,18 +50,6 @@ rcon = [[0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1b, 0x36],
 
 
 def encrypt(input_bytes, key):
-    """Function encrypts the input_bytes according to AES(128) algorithm using the key
-
-    Args:
-       input_bytes -- list of int less than 255, ie list of bytes. Length of input_bytes is constantly 16
-       key -- a strig of plain text. Do not forget it! The same string is used in decryption
-
-    Returns:
-        List of int
-
-    """
-
-    # let's prepare our enter data: State array and KeySchedule
     state = [[] for j in range(4)]
     for r in range(4):
         for c in range(nb):
@@ -96,18 +78,6 @@ def encrypt(input_bytes, key):
 
 
 def decrypt(cipher, key):
-    """Function decrypts the cipher according to AES(128) algorithm using the key
-
-    Args:
-       cipher -- list of int less than 255, ie list of bytes
-       key -- a strig of plain text. Do not forget it! The same string is used in decryption
-
-    Returns:
-        List of int
-
-    """
-
-    # let's prepare our algorithm enter data: State array and KeySchedule
     state = [[] for i in range(nb)]
     for r in range(4):
         for c in range(nb):
@@ -139,18 +109,6 @@ def decrypt(cipher, key):
 
 
 def sub_bytes(state, inv=False):
-    """That transformation replace every element from State on element from Sbox
-    according the algorithm: in hexadecimal notation an element from State
-    consist of two values: 0x<val1><val2>. We take elem from crossing
-    val1-row and val2-column in Sbox and put it instead of the element in State.
-    If decryption-transformation is on (inv == True) it uses InvSbox instead Sbox.
-
-    Args:
-        inv -- If value == False means function is encryption-transformation.
-               True - decryption-transformation
-
-    """
-
     if inv == False:  # encrypt
         box = sbox
     else:  # decrypt
@@ -170,15 +128,6 @@ def sub_bytes(state, inv=False):
 
 
 def shift_rows(state, inv=False):
-    """That transformation shifts rows of State: the second rotate over 1 bytes,
-    the third rotate over 2 bytes, the fourtg rotate over 3 bytes. The transformation doesn't
-    touch the first row. When encrypting transformation uses left shift, in decription - right shift
-
-    Args:
-        inv: If value == False means function is encryption mode. True - decryption mode
-
-    """
-
     count = 1
 
     if inv == False:  # encrypting
@@ -194,16 +143,6 @@ def shift_rows(state, inv=False):
 
 
 def mix_columns(state, inv=False):
-    """When encrypting transformation multiplyes every column of State with
-    a fixed polinomial a(x) = {03}x**3 + {01}x**2 + {01}x + {02} in Galua field.
-    When decrypting multiplies with a'(x) = {0b}x**3 + {0d}x**2 + {09}x + {0e}
-    Detailed information in AES standart.
-
-    Args:
-        inv: If value == False means function is encryption mode. True - decryption mode
-
-    """
-
     for i in range(nb):
 
         if inv == False:  # encryption
@@ -273,11 +212,6 @@ def key_expansion(key):
 
 
 def add_round_key(state, key_schedule, round=0):
-    """That transformation combines State and KeySchedule together. Xor
-    of State and RoundSchedule(part of KeySchedule).
-
-    """
-
     for col in range(nk):
         # nb*round is a shift which indicates start of a part of the KeySchedule
         s0 = state[0][col] ^ key_schedule[0][nb * round + col]
@@ -296,8 +230,6 @@ def add_round_key(state, key_schedule, round=0):
 # Small helpful functions block
 
 def left_shift(array, count):
-    """Rotate the array over count times"""
-
     res = array[:]
     for i in range(count):
         temp = res[1:]
@@ -308,8 +240,6 @@ def left_shift(array, count):
 
 
 def right_shift(array, count):
-    """Rotate the array over count times"""
-
     res = array[:]
     for i in range(count):
         tmp = res[:-1]
@@ -320,8 +250,6 @@ def right_shift(array, count):
 
 
 def mul_by_02(num):
-    """The function multiplies by 2 in Galua space"""
-
     if num < 0x80:
         res = (num << 1)
     else:
@@ -331,11 +259,6 @@ def mul_by_02(num):
 
 
 def mul_by_03(num):
-    """The function multiplies by 3 in Galua space
-    example: 0x03*num = (0x02 + 0x01)num = num*0x02 + num
-    Addition in Galua field is oparetion XOR
-
-    """
     return (mul_by_02(num) ^ num)
 
 
@@ -368,22 +291,6 @@ class Direction(Enum):
 
 part_size = 16
 
-# def run(dir, data, pwd):
-#     result = []
-#     if dir == Direction.ENCRYPT:
-#         data = bytes(data, 'utf-8')
-#         for index in range(0 ,len(data), part_size):
-#             part = data[index:index+part_size]
-#             if len(part) < part_size:
-#                 part += bytes('\x00' * (part_size-len(part)), 'utf-8')
-#             result += encrypt(part, pwd)
-#     elif dir == Direction.DECRYPT:
-#         for index in range(0 ,len(data), part_size):
-#             part = data[index:index+part_size]
-#             result += decrypt(part, pwd)
-#         result = bytes(result).decode('utf-8', errors='ignore').replace('\x00', '')
-#     return result
-
 def run(dir, data, pwd, cipher_file_path=None):
     result = []
 
@@ -413,16 +320,14 @@ if __name__ == '__main__':
     pwd = '1234567890'
     data_source = 'This is a text string'
     data_source = bytes(data_source, 'utf-8')
-    cipher_file_path = 'cipher_image.txt'  # Replace with the actual path
+    cipher_file_path = 'cipher_image.txt'
 
     print(f'SOURCE:\n{data_source}')
 
-    # Encrypt and write to file
     data_encrypted = run(Direction.ENCRYPT, data_source, pwd, cipher_file_path)
 
     print(type(data_encrypted[0]))
     print(f'STORAGE(source => encrypted in {cipher_file_path}):\n{data_encrypted}')
 
-    # Decrypt from file
     data_decrypted = run(Direction.DECRYPT, None, pwd, cipher_file_path)
     print(f'RESULT (source => encrypted => decrypted):\n{data_decrypted}')
