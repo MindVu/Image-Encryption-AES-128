@@ -5,7 +5,6 @@ from aes import run, Direction
 class AESCipher(object):
 
     def __init__(self, key, cipher_file_path):
-        self.bs = 16
         self.key = key
         self.cipher_file_path = cipher_file_path
 

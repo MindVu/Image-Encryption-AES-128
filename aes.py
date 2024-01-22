@@ -71,6 +71,7 @@ def encrypt(input_bytes, key):
     state = shift_rows(state)
     state = add_round_key(state, key_schedule, rnd + 1)
 
+    # Output as 1D array of State
     output = [None for i in range(4 * nb)]
     for r in range(4):
         for c in range(nb):
@@ -111,16 +112,16 @@ def decrypt(cipher, key):
 
 
 def sub_bytes(state, inv=False):
-    if inv == False:  # encrypt
+    if inv == False:  # Encrypt
         box = sbox
-    else:  # decrypt
+    else:  # Decrypt
         box = inv_sbox
 
     for i in range(len(state)):
         for j in range(len(state[i])):
             row = state[i][j] // 0x10
             col = state[i][j] % 0x10
-
+            # Substitute each element in the state matrix with the corresponding value from the S-box
             box_elem = box[16 * row + col]
             state[i][j] = box_elem
 
@@ -130,11 +131,11 @@ def sub_bytes(state, inv=False):
 def shift_rows(state, inv=False):
     count = 1
 
-    if inv == False:
+    if inv == False:  # Shift rows left (Encrypt)
         for i in range(1, nb):
             state[i] = left_shift(state[i], count)
             count += 1
-    else: 
+    else:  # Shift rows right (Decrypt)
         for i in range(1, nb):
             state[i] = right_shift(state[i], count)
             count += 1
@@ -145,17 +146,18 @@ def shift_rows(state, inv=False):
 def mix_columns(state, inv=False):
     for i in range(nb):
 
-        if inv == False: 
+        if inv == False:  # Mix columns (Encrypt)
             s0 = mul_by_02(state[0][i]) ^ mul_by_03(state[1][i]) ^ state[2][i] ^ state[3][i]
             s1 = state[0][i] ^ mul_by_02(state[1][i]) ^ mul_by_03(state[2][i]) ^ state[3][i]
             s2 = state[0][i] ^ state[1][i] ^ mul_by_02(state[2][i]) ^ mul_by_03(state[3][i])
             s3 = mul_by_03(state[0][i]) ^ state[1][i] ^ state[2][i] ^ mul_by_02(state[3][i])
-        else:  
+        else:  # Inverse Mix columns (Decrypt)
             s0 = mul_by_0e(state[0][i]) ^ mul_by_0b(state[1][i]) ^ mul_by_0d(state[2][i]) ^ mul_by_09(state[3][i])
             s1 = mul_by_09(state[0][i]) ^ mul_by_0e(state[1][i]) ^ mul_by_0b(state[2][i]) ^ mul_by_0d(state[3][i])
             s2 = mul_by_0d(state[0][i]) ^ mul_by_09(state[1][i]) ^ mul_by_0e(state[2][i]) ^ mul_by_0b(state[3][i])
             s3 = mul_by_0b(state[0][i]) ^ mul_by_0d(state[1][i]) ^ mul_by_09(state[2][i]) ^ mul_by_0e(state[3][i])
 
+        # Update the state matrix with the mixed column values
         state[0][i] = s0
         state[1][i] = s1
         state[2][i] = s2
@@ -165,46 +167,48 @@ def mix_columns(state, inv=False):
 
 
 def key_expansion(key):
-
+    # Convert the characters of the key to their corresponding ASCII values
     key_symbols = [ord(symbol) for symbol in key]
 
-    # CipherKey should contain 16 symbols to fill 4*4 table. If it's less, complete the key with "0x01"
+    # CipherKey should contain 16 symbols to fill a 4x4 table. If it's less, complete the key with "0x01"
     if len(key_symbols) < 4 * nk:
         for i in range(4 * nk - len(key_symbols)):
             key_symbols.append(0x01)
 
-    # make CipherKey(which is base of KeySchedule)
+    # Initialize the key_schedule matrix
     key_schedule = [[] for i in range(4)]
+
+    # Fill the first columns of the key_schedule with the key_symbols
     for r in range(4):
         for c in range(nk):
             key_schedule[r].append(key_symbols[r + 4 * c])
 
-    # Comtinue to fill KeySchedule
-    for col in range(nk, nb * (nr + 1)):  # col - column number
+    # Continue filling the rest of the key_schedule columns
+    for col in range(nk, nb * (nr + 1)):
         if col % nk == 0:
-            # take shifted (col - 1)th column
+            # For the first column of each round, apply transformations using the S-box and Rcon values
             tmp = [key_schedule[row][col - 1] for row in range(1, 4)]
             tmp.append(key_schedule[0][col - 1])
 
-            # change its elements using S-box table
+            # Apply S-box substitution to each element in tmp
             for j in range(len(tmp)):
                 sbox_row = tmp[j] // 0x10
                 sbox_col = tmp[j] % 0x10
                 sbox_elem = sbox[16 * sbox_row + sbox_col]
                 tmp[j] = sbox_elem
 
-            # and finally make XOR of 3 columns
+            # XOR each element with the corresponding elements from the previous column and Rcon values
             for row in range(4):
                 s = (key_schedule[row][col - 4]) ^ (tmp[row]) ^ (rcon[row][int(col / nk - 1)])
                 key_schedule[row].append(s)
-
         else:
-            # just make XOR of 2 columns
+            # For other columns, simply XOR with the corresponding elements from the previous column
             for row in range(4):
                 s = key_schedule[row][col - 4] ^ key_schedule[row][col - 1]
                 key_schedule[row].append(s)
 
     return key_schedule
+
 
 
 def add_round_key(state, key_schedule, round=0):
@@ -236,6 +240,7 @@ def run(dir, data, pwd, cipher_file_path=None):
     result = []
 
     if dir == Direction.ENCRYPT:
+        print(type(data))
         with open(cipher_file_path, "wb") as cipher_file:
             for index in range(0, len(data), part_size):
                 part = data[index:index + part_size]
@@ -256,19 +261,19 @@ def run(dir, data, pwd, cipher_file_path=None):
     return result
 
 
-# # test
-# if __name__ == '__main__':
-#     pwd = '1234567890'
-#     data_source = 'This is a text string'
-#     data_source = bytes(data_source, 'utf-8')
-#     cipher_file_path = 'cipher_image.txt'
+# test
+if __name__ == '__main__':
+    pwd = '1234567890'
+    data_source = 'This is a text string'
+    data_source = bytes(data_source, 'utf-8')
+    cipher_file_path = 'cipher_image.txt'
 
-#     print(f'SOURCE:\n{data_source}')
+    print(f'SOURCE:\n{data_source}')
 
-#     data_encrypted = run(Direction.ENCRYPT, data_source, pwd, cipher_file_path)
+    data_encrypted = run(Direction.ENCRYPT, data_source, pwd, cipher_file_path)
 
-#     print(type(data_encrypted[0]))
-#     print(f'STORAGE(source => encrypted in {cipher_file_path}):\n{data_encrypted}')
+    print(type(data_encrypted[0]))
+    print(f'STORAGE(source => encrypted in {cipher_file_path}):\n{data_encrypted}')
 
-#     data_decrypted = run(Direction.DECRYPT, None, pwd, cipher_file_path)
-#     print(f'RESULT (source => encrypted => decrypted):\n{data_decrypted}')
+    data_decrypted = run(Direction.DECRYPT, None, pwd, cipher_file_path)
+    print(f'RESULT (source => encrypted => decrypted):\n{data_decrypted}')

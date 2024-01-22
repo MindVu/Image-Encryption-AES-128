@@ -39,8 +39,10 @@ class encrypt_page():
             ok = pixmap.save(buff, "PNG")
             assert ok
             pixmap_bytes = ba.data()
-            # print(pixmap_bytes)
+            print(type(pixmap_bytes))
             self.stri = base64.b64encode(pixmap_bytes)
+            # print(type(self.stri))
+            
 
     def onClickEncrypt(self):
         # generate the cipher text file name based on the input image file
