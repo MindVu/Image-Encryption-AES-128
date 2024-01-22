@@ -10,6 +10,7 @@ class Encrypter:
         self.cipher_file_path = cipher_file_path
     def encrypt_image(self):
         aes = AESCipher(self.key, self.cipher_file_path)
+        print(self.text)
         cipher = aes.encrypt(self.text)
 
         return cipher

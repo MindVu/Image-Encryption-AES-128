@@ -6,15 +6,10 @@ from PyQt5.QtWidgets import QFileDialog,QLabel,QAction,QMainWindow,QApplication
 from PyQt5.uic import loadUiType
 from Encrypter import Encrypter
 from Decrypter import Decrypter
-#from tkinter import *
 import base64
 import os
 import sys
-#import tkinter
-#import tkinter.filedialog as tkFileDialog
 Qt = QtCore.Qt
-
-
 
 ui, _ = loadUiType('ui.ui')
 def start():
@@ -44,10 +39,11 @@ class encrypt_page():
             ok = pixmap.save(buff, "PNG")
             assert ok
             pixmap_bytes = ba.data()
+            # print(pixmap_bytes)
             self.stri = base64.b64encode(pixmap_bytes)
 
     def onClickEncrypt(self):
-        # Generate the cipher text file name based on the input image file
+        # generate the cipher text file name based on the input image file
         input_image_path = self.file[0]
         input_image_filename = os.path.basename(input_image_path)
         cipher_file_name = f'cipher_{input_image_filename}.txt'
