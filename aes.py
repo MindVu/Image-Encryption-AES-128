@@ -1,3 +1,5 @@
+from utils import left_shift, right_shift, mul_by_02, mul_by_03, mul_by_09, mul_by_0b, mul_by_0d, mul_by_0e
+
 nb = 4  # number of column of State
 nr = 10 # number of round
 nk = 4  # key length
@@ -119,8 +121,6 @@ def sub_bytes(state, inv=False):
             row = state[i][j] // 0x10
             col = state[i][j] % 0x10
 
-            # Our Sbox is a flat array, not a table. So, we use this trick to find elem:
-            # And DO NOT change list sbox! if you want it to work
             box_elem = box[16 * row + col]
             state[i][j] = box_elem
 
@@ -165,14 +165,10 @@ def mix_columns(state, inv=False):
 
 
 def key_expansion(key):
-    """It makes list of RoundKeys for function AddRoundKey. All details
-    about algorithm is is in AES standart
-
-    """
 
     key_symbols = [ord(symbol) for symbol in key]
 
-    # CipherKey shoul contain 16 symbols to fill 4*4 table. If it's less, complete the key with "0x01"
+    # CipherKey should contain 16 symbols to fill 4*4 table. If it's less, complete the key with "0x01"
     if len(key_symbols) < 4 * nk:
         for i in range(4 * nk - len(key_symbols)):
             key_symbols.append(0x01)
@@ -226,61 +222,6 @@ def add_round_key(state, key_schedule, round=0):
 
     return state
 
-
-# Util functions
-
-def left_shift(array, count):
-    res = array[:]
-    for i in range(count):
-        temp = res[1:]
-        temp.append(res[0])
-        res[:] = temp[:]
-
-    return res
-
-
-def right_shift(array, count):
-    res = array[:]
-    for i in range(count):
-        tmp = res[:-1]
-        tmp.insert(0, res[-1])
-        res[:] = tmp[:]
-
-    return res
-
-
-def mul_by_02(num):
-    if num < 0x80:
-        res = (num << 1)
-    else:
-        res = (num << 1) ^ 0x1b
-
-    return res % 0x100
-
-
-def mul_by_03(num):
-    return (mul_by_02(num) ^ num)
-
-
-def mul_by_09(num):
-    return mul_by_02(mul_by_02(mul_by_02(num))) ^ num
-
-
-def mul_by_0b(num):
-    # return mul_by_09(num)^mul_by_02(num)
-    return mul_by_02(mul_by_02(mul_by_02(num))) ^ mul_by_02(num) ^ num
-
-
-def mul_by_0d(num):
-    # return mul_by_0b(num)^mul_by_02(num)
-    return mul_by_02(mul_by_02(mul_by_02(num))) ^ mul_by_02(mul_by_02(num)) ^ num
-
-
-def mul_by_0e(num):
-    # return mul_by_0d(num)^num
-    return mul_by_02(mul_by_02(mul_by_02(num))) ^ mul_by_02(mul_by_02(num)) ^ mul_by_02(num)
-
-# End util functions
 
 from enum import Enum
 
